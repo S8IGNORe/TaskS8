@@ -527,6 +527,7 @@
 
     @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
     @keyframes scaleIn { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: scale(1); } }
+    @keyframes spin    { to { transform: rotate(360deg); } }
 
     /* ── LOGIN SCREEN ── */
     #login-screen {
@@ -737,7 +738,7 @@
           <polyline points="9 11 12 14 22 4"/>
           <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
         </svg>
-        TaskS8 <span>v1.0.5</span>
+        TaskS8 <span>v1.0.7</span>
       </div>
     </div>
   </div>
@@ -926,236 +927,196 @@
       <span>Task<b>S8</b></span>
     </div>
 
-    <!-- VIEW: select profile -->
-    <div id="view-select">
-      <div class="login-title">Bem-vindo</div>
-      <div class="login-sub">Selecione seu perfil para continuar.</div>
-      <div class="profile-list" id="profile-list"></div>
+    <!-- VIEW: login -->
+    <div id="view-login">
+      <div class="login-title">Bem-vindo de volta</div>
+      <div class="login-sub">Entre com seu e-mail e senha.</div>
+      <div class="login-error" id="login-error"></div>
+      <input class="login-inp" id="login-email" type="email" placeholder="E-mail" autocomplete="email"/>
+      <input class="login-inp" id="login-pass"  type="password" placeholder="Senha" autocomplete="current-password"/>
+      <button class="login-btn" id="login-btn" onclick="doLogin()">Entrar</button>
       <div class="login-divider">ou</div>
-      <button class="login-btn" onclick="showView('create')" style="background:var(--input-bg);color:var(--text-2);border:1.5px solid var(--border);">
-        + Criar novo perfil
+      <button class="login-btn" onclick="showView('register')" style="background:var(--input-bg);color:var(--text-2);border:1.5px solid var(--border);">
+        Criar conta
       </button>
     </div>
 
-    <!-- VIEW: create profile -->
-    <div id="view-create" style="display:none">
-      <div class="login-title">Novo Perfil</div>
-      <div class="login-sub">Escolha um nome e um PIN de 4 dígitos.</div>
-      <div class="login-error" id="create-error"></div>
-      <input class="login-inp" id="create-name" placeholder="Seu nome" maxlength="24"/>
-      <input class="login-inp" id="create-pin" placeholder="PIN (4 dígitos)" type="password" maxlength="4" inputmode="numeric" pattern="[0-9]*"/>
-      <input class="login-inp" id="create-pin2" placeholder="Confirmar PIN" type="password" maxlength="4" inputmode="numeric" pattern="[0-9]*"/>
-      <button class="login-btn" onclick="createProfile()">Criar perfil</button>
-      <button class="login-back" onclick="showView('select')">← Voltar</button>
+    <!-- VIEW: register -->
+    <div id="view-register" style="display:none">
+      <div class="login-title">Criar conta</div>
+      <div class="login-sub">Seus dados ficam salvos na nuvem.</div>
+      <div class="login-error" id="register-error"></div>
+      <input class="login-inp" id="reg-name"  type="text"     placeholder="Seu nome" maxlength="32"/>
+      <input class="login-inp" id="reg-email" type="email"    placeholder="E-mail" autocomplete="email"/>
+      <input class="login-inp" id="reg-pass"  type="password" placeholder="Senha (mín. 6 caracteres)" autocomplete="new-password"/>
+      <input class="login-inp" id="reg-pass2" type="password" placeholder="Confirmar senha" autocomplete="new-password"/>
+      <button class="login-btn" id="register-btn" onclick="doRegister()">Criar conta</button>
+      <button class="login-back" onclick="showView('login')">← Voltar</button>
     </div>
 
-    <!-- VIEW: enter PIN -->
-    <div id="view-pin" style="display:none">
-      <div class="login-title" id="pin-title">Olá!</div>
-      <div class="login-sub">Digite seu PIN para entrar.</div>
-      <div class="pin-dots" id="pin-dots">
-        <div class="pin-dot"></div><div class="pin-dot"></div>
-        <div class="pin-dot"></div><div class="pin-dot"></div>
-      </div>
-      <div class="login-error" id="pin-error"></div>
-      <input class="login-inp" id="pin-input" placeholder="PIN" type="password" maxlength="4" inputmode="numeric" pattern="[0-9]*" oninput="updatePinDots()"/>
-      <button class="login-btn" onclick="loginWithPin()">Entrar</button>
-      <button class="login-back" onclick="showView('select')">← Outros perfis</button>
+    <!-- VIEW: loading -->
+    <div id="view-loading" style="display:none;text-align:center;padding:1rem 0">
+      <div style="color:var(--text-2);font-size:.9rem;margin-bottom:.5rem">Carregando...</div>
+      <div style="width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto"></div>
     </div>
 
   </div>
 </div>
 
-<script>
-  // ── Crypto (AES-256-GCM + PBKDF2) ────────────────────────────────────────
-  // PIN is NEVER stored anywhere — used only to derive an AES key in memory.
-  // Data encrypted before going to localStorage. Wrong PIN = decryption fails.
+<script type="module">
+  // ══════════════════════════════════════════════════════════════════════════
+  // FIREBASE CONFIG — substitua pelos seus valores após criar o projeto
+  // ══════════════════════════════════════════════════════════════════════════
+  const FIREBASE_CONFIG = {
+    apiKey:            "AIzaSyC4JPLC5--ez_vgb1rqFgd_e9W6oJR96gs",
+    authDomain:        "tasks8-73e7b.firebaseapp.com",
+    projectId:         "tasks8-73e7b",
+    storageBucket:     "tasks8-73e7b.firebasestorage.app",
+    messagingSenderId: "406409419360",
+    appId:             "1:406409419360:web:ebfd151ec8a78d6b594105"
+  };
+  // ══════════════════════════════════════════════════════════════════════════
 
+  // Firebase SDKs (carregados via CDN modular)
+  const { initializeApp }                                  = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+  const { getAuth, createUserWithEmailAndPassword,
+          signInWithEmailAndPassword, signOut,
+          onAuthStateChanged, updateProfile }              = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+  const { getFirestore, doc, getDoc,
+          setDoc, serverTimestamp }                        = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+
+  const fbApp  = initializeApp(FIREBASE_CONFIG);
+  const fbAuth = getAuth(fbApp);
+  const fbDb   = getFirestore(fbApp);
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
   const PROFILE_COLORS = ['#3b6ff0','#2ecc8e','#e05858','#f0a53b','#9b59b6','#1abc9c','#e74c3c','#2980b9'];
-  const CANARY = 'tasks8-v1-ok';
+  function colorForUid(uid) { let n=0; for(const c of uid) n+=c.charCodeAt(0); return PROFILE_COLORS[n%PROFILE_COLORS.length]; }
+  function initials(name)   { return (name||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2); }
 
-  let currentProfile   = null;
-  let sessionKey       = null;   // CryptoKey in memory only — wiped on logout
-  let pendingProfileId = null;
+  let currentUser = null;
 
-  async function deriveKey(pin, salt) {
-    const mat = await crypto.subtle.importKey(
-      'raw', new TextEncoder().encode(pin), 'PBKDF2', false, ['deriveKey']
-    );
-    return crypto.subtle.deriveKey(
-      { name: 'PBKDF2', salt: new Uint8Array(salt), iterations: 200000, hash: 'SHA-256' },
-      mat,
-      { name: 'AES-GCM', length: 256 },
-      false, ['encrypt', 'decrypt']
-    );
+  // Firestore paths
+  function userDoc(type) { return doc(fbDb, 'users', currentUser.uid, 'data', type); }
+
+  // Save data to Firestore
+  async function save()        { await setDoc(userDoc('tasks'),   { items: tasks,      updatedAt: serverTimestamp() }); }
+  async function saveCats()    { await setDoc(userDoc('cats'),    { items: categories, updatedAt: serverTimestamp() }); }
+  async function saveHistory() { await setDoc(userDoc('history'), { items: history,    updatedAt: serverTimestamp() }); }
+
+  // Load data from Firestore (falls back to empty array)
+  async function loadUserData() {
+    const [t, c, h] = await Promise.all([
+      getDoc(userDoc('tasks')),
+      getDoc(userDoc('cats')),
+      getDoc(userDoc('history'))
+    ]);
+    tasks      = t.exists() ? (t.data().items || []) : [];
+    categories = c.exists() ? (c.data().items || []) : [];
+    history    = h.exists() ? (h.data().items || []) : [];
   }
-
-  async function aesEncrypt(key, obj) {
-    const iv  = crypto.getRandomValues(new Uint8Array(12));
-    const enc = await crypto.subtle.encrypt(
-      { name: 'AES-GCM', iv }, key,
-      new TextEncoder().encode(JSON.stringify(obj))
-    );
-    return { iv: [...iv], d: [...new Uint8Array(enc)] };
-  }
-
-  async function aesDecrypt(key, blob) {
-    const dec = await crypto.subtle.decrypt(
-      { name: 'AES-GCM', iv: new Uint8Array(blob.iv) }, key,
-      new Uint8Array(blob.d)
-    );
-    return JSON.parse(new TextDecoder().decode(dec));
-  }
-
-  // ── Profile storage ───────────────────────────────────────────────────────
-  function getProfiles()   { return JSON.parse(localStorage.getItem('tf_profiles') || '[]'); }
-  function saveProfiles(p) { localStorage.setItem('tf_profiles', JSON.stringify(p)); }
-  function profileKey(id, type) { return `tf_enc_${type}_${id}`; }
-  function colorForIndex(i) { return PROFILE_COLORS[i % PROFILE_COLORS.length]; }
-  function initials(name)   { return name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2); }
-
-  async function pset(type, data) {
-    if (!sessionKey) return;
-    const blob = await aesEncrypt(sessionKey, data);
-    localStorage.setItem(profileKey(currentProfile.id, type), JSON.stringify(blob));
-  }
-
-  async function pget(type) {
-    if (!sessionKey) return [];
-    const raw = localStorage.getItem(profileKey(currentProfile.id, type));
-    if (!raw) return [];
-    try { return await aesDecrypt(sessionKey, JSON.parse(raw)); }
-    catch { return []; }
-  }
-
-  function save()        { pset('tasks',   tasks); }
-  function saveCats()    { pset('cats',    categories); }
-  function saveHistory() { pset('history', history); }
 
   // ── Login views ───────────────────────────────────────────────────────────
   function showView(v) {
-    ['select','create','pin'].forEach(x =>
+    ['login','register','loading'].forEach(x =>
       document.getElementById('view-'+x).style.display = x === v ? 'block' : 'none'
     );
-    document.getElementById('create-error').classList.remove('show');
-    document.getElementById('pin-error').classList.remove('show');
-    if (v === 'select') renderProfileList();
-    if (v === 'create') setTimeout(()=>document.getElementById('create-name').focus(), 50);
-    if (v === 'pin')    { document.getElementById('pin-input').value=''; updatePinDots(); setTimeout(()=>document.getElementById('pin-input').focus(),50); }
-  }
-
-  function renderProfileList() {
-    const profiles = getProfiles();
-    const list = document.getElementById('profile-list');
-    list.innerHTML = '';
-    if (profiles.length === 0) {
-      list.innerHTML = '<div style="color:var(--text-3);font-size:.84rem;text-align:center;padding:.8rem 0">Nenhum perfil criado ainda.</div>';
-      return;
-    }
-    profiles.forEach((p, i) => {
-      const btn = document.createElement('button');
-      btn.className = 'profile-btn';
-      btn.innerHTML = `
-        <div class="profile-avatar" style="background:${colorForIndex(i)}">${initials(p.name)}</div>
-        <div class="profile-info">
-          <div class="pname">${esc(p.name)}</div>
-          <div class="ptasks" style="display:flex;align-items:center;gap:.3rem">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            Dados criptografados
-          </div>
-        </div>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-        <button class="pdel-btn" title="Excluir perfil" onclick="event.stopPropagation();deleteProfile('${p.id}')">✕</button>
-      `;
-      btn.addEventListener('click', () => startLogin(p.id));
-      list.appendChild(btn);
+    if (v === 'login')    setTimeout(()=>document.getElementById('login-email').focus(), 50);
+    if (v === 'register') setTimeout(()=>document.getElementById('reg-name').focus(), 50);
+    // clear errors
+    ['login-error','register-error'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.textContent=''; el.classList.remove('show'); }
     });
   }
 
-  function startLogin(profileId) {
-    pendingProfileId = profileId;
-    const p = getProfiles().find(x => x.id === profileId);
-    document.getElementById('pin-title').textContent = `Olá, ${p.name}!`;
-    showView('pin');
+  function setLoading(btnId, on) {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    btn.disabled = on;
+    btn.textContent = on ? 'Aguarde...' : (btnId === 'login-btn' ? 'Entrar' : 'Criar conta');
   }
 
-  async function createProfile() {
-    const name = document.getElementById('create-name').value.trim();
-    const pin  = document.getElementById('create-pin').value;
-    const pin2 = document.getElementById('create-pin2').value;
-    const err  = document.getElementById('create-error');
+  const FB_ERRORS = {
+    'auth/email-already-in-use':    'Este e-mail já está cadastrado.',
+    'auth/invalid-email':           'E-mail inválido.',
+    'auth/weak-password':           'Senha muito fraca (mín. 6 caracteres).',
+    'auth/user-not-found':          'E-mail não encontrado.',
+    'auth/wrong-password':          'Senha incorreta.',
+    'auth/invalid-credential':      'E-mail ou senha incorretos.',
+    'auth/too-many-requests':       'Muitas tentativas. Tente novamente mais tarde.',
+    'auth/network-request-failed':  'Sem conexão. Verifique sua internet.',
+  };
 
-    if (!name)
-      { err.textContent = 'Digite um nome.'; err.classList.add('show'); return; }
-    if (pin.length !== 4 || !/^\d{4}$/.test(pin))
-      { err.textContent = 'O PIN deve ter exatamente 4 dígitos numéricos.'; err.classList.add('show'); return; }
-    if (pin !== pin2)
-      { err.textContent = 'Os PINs não coincidem.'; err.classList.add('show'); return; }
-
-    const profiles = getProfiles();
-    if (profiles.find(p => p.name.toLowerCase() === name.toLowerCase()))
-      { err.textContent = 'Já existe um perfil com esse nome.'; err.classList.add('show'); return; }
-
-    const salt   = [...crypto.getRandomValues(new Uint8Array(16))];
-    const key    = await deriveKey(pin, salt);
-    const canary = await aesEncrypt(key, CANARY);
-    const id     = Date.now().toString(36) + Math.random().toString(36).slice(2);
-
-    profiles.push({ id, name, salt, canary });
-    saveProfiles(profiles);
-
-    document.getElementById('create-name').value = '';
-    document.getElementById('create-pin').value  = '';
-    document.getElementById('create-pin2').value = '';
-
-    sessionKey = key;
-    pendingProfileId = id;
-    await enterApp(profiles[profiles.length - 1], profiles.length - 1);
-  }
-
-  async function loginWithPin() {
-    const pin = document.getElementById('pin-input').value;
-    const err = document.getElementById('pin-error');
-    if (pin.length !== 4) { err.textContent = 'Digite os 4 dígitos do PIN.'; err.classList.add('show'); return; }
-
-    const profiles = getProfiles();
-    const p = profiles.find(x => x.id === pendingProfileId);
-    if (!p) { showView('select'); return; }
-
+  async function doLogin() {
+    const email = document.getElementById('login-email').value.trim();
+    const pass  = document.getElementById('login-pass').value;
+    const err   = document.getElementById('login-error');
+    if (!email || !pass) { err.textContent='Preencha e-mail e senha.'; err.classList.add('show'); return; }
+    setLoading('login-btn', true);
     try {
-      const key    = await deriveKey(pin, p.salt);
-      const result = await aesDecrypt(key, p.canary);
-      if (result !== CANARY) throw new Error('bad pin');
-      sessionKey = key;
-      await enterApp(p, profiles.indexOf(p));
-    } catch {
-      err.textContent = 'PIN incorreto. Tente novamente.';
+      await signInWithEmailAndPassword(fbAuth, email, pass);
+      // onAuthStateChanged handles the rest
+    } catch(e) {
+      err.textContent = FB_ERRORS[e.code] || 'Erro ao entrar. Tente novamente.';
       err.classList.add('show');
-      document.getElementById('pin-input').value = '';
-      updatePinDots();
+      setLoading('login-btn', false);
     }
   }
 
-  function updatePinDots() {
-    const val = document.getElementById('pin-input').value;
-    document.querySelectorAll('.pin-dot').forEach((d, i) =>
-      d.classList.toggle('filled', i < val.length)
-    );
-    if (val.length === 4) loginWithPin();
+  async function doRegister() {
+    const name  = document.getElementById('reg-name').value.trim();
+    const email = document.getElementById('reg-email').value.trim();
+    const pass  = document.getElementById('reg-pass').value;
+    const pass2 = document.getElementById('reg-pass2').value;
+    const err   = document.getElementById('register-error');
+
+    if (!name)          { err.textContent='Digite seu nome.';            err.classList.add('show'); return; }
+    if (!email)         { err.textContent='Digite seu e-mail.';          err.classList.add('show'); return; }
+    if (pass.length<6)  { err.textContent='Senha mínima de 6 caracteres.'; err.classList.add('show'); return; }
+    if (pass !== pass2) { err.textContent='As senhas não coincidem.';    err.classList.add('show'); return; }
+
+    setLoading('register-btn', true);
+    try {
+      const cred = await createUserWithEmailAndPassword(fbAuth, email, pass);
+      await updateProfile(cred.user, { displayName: name });
+      // onAuthStateChanged handles the rest
+    } catch(e) {
+      err.textContent = FB_ERRORS[e.code] || 'Erro ao criar conta. Tente novamente.';
+      err.classList.add('show');
+      setLoading('register-btn', false);
+    }
   }
 
-  async function enterApp(profile, idx) {
-    currentProfile = profile;
-    tasks      = await pget('tasks');
-    categories = await pget('cats');
-    history    = await pget('history');
+  // Enter key support
+  document.getElementById('login-pass').addEventListener('keydown',  e => { if(e.key==='Enter') doLogin(); });
+  document.getElementById('login-email').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
 
-    applyDark(localStorage.getItem(profileKey(profile.id,'dark')) === '1');
+  // ── Auth state listener ───────────────────────────────────────────────────
+  onAuthStateChanged(fbAuth, async user => {
+    if (user) {
+      showView('loading');
+      currentUser = user;
+      await loadUserData();
+      enterApp(user);
+    } else {
+      currentUser = null;
+      tasks = []; categories = []; history = [];
+      showView('login');
+      document.getElementById('login-screen').classList.add('visible');
+    }
+  });
 
-    document.getElementById('sb-profile-name').textContent = profile.name;
+  function enterApp(user) {
+    const name  = user.displayName || user.email.split('@')[0];
+    const color = colorForUid(user.uid);
+
+    document.getElementById('sb-profile-name').textContent = name;
     const av = document.getElementById('sb-avatar');
-    av.textContent = initials(profile.name);
-    av.style.background = colorForIndex(idx);
+    av.textContent     = initials(name);
+    av.style.background = color;
+
+    applyDark(localStorage.getItem('tf_dark_'+user.uid) === '1');
 
     document.getElementById('login-screen').classList.remove('visible');
     checkRecurring();
@@ -1166,18 +1127,11 @@
   }
 
   function logout() {
-    sessionKey     = null;   // key wiped from memory
-    currentProfile = null;
+    signOut(fbAuth);
+    currentUser = null;
     tasks = []; categories = []; history = [];
     document.getElementById('login-screen').classList.add('visible');
-    showView('select');
-  }
-
-  async function deleteProfile(id) {
-    if (!confirm('Excluir este perfil e todos os seus dados permanentemente?')) return;
-    saveProfiles(getProfiles().filter(p => p.id !== id));
-    ['tasks','cats','history','dark'].forEach(t => localStorage.removeItem(profileKey(id, t)));
-    renderProfileList();
+    showView('login');
   }
 
   // ── State ──────────────────────────────────────────────────────────────────
@@ -1189,10 +1143,6 @@
   let selCatId   = null;
   let selRec     = '';
 
-  function save()        { pset('tasks',   tasks); }
-  function saveCats()    { pset('cats',    categories); }
-  function saveHistory() { pset('history', history); }
-
   // ── Dark mode ──────────────────────────────────────────────────────────────
   function applyDark(on) {
     document.body.classList.toggle('dark', on);
@@ -1201,7 +1151,7 @@
   }
   function toggleDark() {
     const d = !document.body.classList.contains('dark');
-    if (currentProfile) localStorage.setItem(profileKey(currentProfile.id,'dark'), d ? '1' : '0');
+    if (currentUser) localStorage.setItem('tf_dark_'+currentUser.uid, d ? '1' : '0');
     applyDark(d);
   }
 
@@ -1794,8 +1744,10 @@
       document.getElementById('rec-dropdown').classList.remove('open');
   });
 
-  // ── Init: show login screen ───────────────────────────────────────────────
-  showView('select');
+  // ── Init ─────────────────────────────────────────────────────────────────
+  // Firebase onAuthStateChanged above handles all initialization.
+  // Show login view by default while Firebase checks auth state.
+  showView('login');
 
   // Live countdown: update every 30s
   setInterval(() => {
