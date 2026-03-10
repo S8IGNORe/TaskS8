@@ -305,6 +305,19 @@
     /* left color bar */
     .task-bar { border-radius: 999px; flex-shrink: 0; height: 28px; width: 3px; }
 
+    /* drag handle */
+    .drag-handle {
+      align-items: center; color: var(--text-3); cursor: grab; display: flex;
+      flex-shrink: 0; opacity: 0; padding: 0 .1rem; transition: opacity .15s;
+    }
+    .drag-handle:active { cursor: grabbing; }
+    .drag-handle svg { width: 14px; height: 14px; pointer-events: none; }
+    .task-item:hover .drag-handle { opacity: 1; }
+
+    /* drag states */
+    .task-item.dragging { opacity: .35; border: 1.5px dashed var(--accent) !important; }
+    .task-item.drag-over { border-color: var(--accent) !important; box-shadow: 0 0 0 2px rgba(59,111,240,.2); transform: scale(1.01); }
+
     .cb-wrap { flex-shrink: 0; position: relative; width: 20px; height: 20px; }
     .cb-wrap input { cursor: pointer; inset: 0; opacity: 0; position: absolute; width: 100%; height: 100%; z-index: 2; }
     .cb-box { background: var(--card); border: 2px solid #c8c6c0; border-radius: 5px; height: 20px; width: 20px; left: 0; top: 0; position: absolute; transition: all .18s; }
@@ -423,6 +436,54 @@
     .hist-duration { color: var(--text-3); font-size: .76rem; white-space: nowrap; }
 
     .hist-empty { text-align: center; padding: 2.5rem; color: var(--text-3); font-size: .85rem; }
+
+    /* ── RECURRENCE ── */
+    .rec-select-btn {
+      align-items: center; background: var(--input-bg); border: 1.5px solid var(--border);
+      border-radius: var(--r); color: var(--text-2); cursor: pointer; display: flex;
+      font-family: 'IBM Plex Sans', sans-serif; font-size: .8rem; font-weight: 500;
+      gap: .45rem; height: 100%; padding: 0 .9rem; transition: border-color .2s;
+      white-space: nowrap; min-width: 120px;
+    }
+    .rec-select-btn:hover { border-color: var(--accent); }
+    .rec-select-btn svg { width: 14px; height: 14px; flex-shrink: 0; opacity: .6; }
+    .rec-select-btn .rec-arrow { width: 12px; height: 12px; margin-left: auto; opacity: .5; }
+
+    .rec-wrap { position: relative; flex-shrink: 0; }
+
+    .rec-dropdown {
+      background: var(--card); border: 1px solid var(--border); border-radius: var(--r);
+      box-shadow: var(--shadow-md); display: none; left: 0; min-width: 160px;
+      position: absolute; top: calc(100% + 6px); z-index: 50; overflow: hidden;
+    }
+    .rec-dropdown.open { display: block; }
+
+    .rec-opt {
+      align-items: center; cursor: pointer; display: flex; font-size: .84rem;
+      gap: .6rem; padding: .6rem .9rem; transition: background .12s; color: var(--text);
+    }
+    .rec-opt:hover { background: var(--input-bg); }
+    .rec-opt.selected { font-weight: 600; color: var(--accent); }
+    .rec-opt svg { width: 14px; height: 14px; opacity: .6; flex-shrink: 0; }
+
+    /* Recurrence badge on task items */
+    .rec-badge {
+      align-items: center; border-radius: 999px; display: inline-flex; gap: .3rem;
+      font-size: .66rem; font-weight: 600; padding: .18rem .55rem; white-space: nowrap;
+    }
+    .rec-badge svg { width: 10px; height: 10px; }
+    .rec-badge.daily   { background: rgba(59,111,240,.12); color: #3b6ff0; }
+    .rec-badge.weekly  { background: rgba(155,89,182,.12); color: #9b59b6; }
+    .rec-badge.monthly { background: rgba(240,165,59,.12);  color: #e67e22; }
+
+    /* Due indicator */
+    .due-chip {
+      border-radius: 999px; font-size: .66rem; font-weight: 600;
+      padding: .18rem .55rem; white-space: nowrap;
+    }
+    .due-chip.overdue { background: rgba(224,88,88,.12); color: var(--danger); }
+    .due-chip.due-today { background: rgba(240,165,59,.12); color: #e67e22; }
+    .due-chip.upcoming { background: rgba(46,204,142,.1); color: var(--success); }
 
     /* ── ANIMATIONS ── */
     @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
@@ -585,6 +646,33 @@
         <div class="cat-dropdown" id="cat-dropdown"></div>
       </div>
 
+      <!-- Recurrence picker -->
+      <div class="rec-wrap" id="rec-wrap">
+        <button class="rec-select-btn" id="rec-select-btn" onclick="toggleRecDropdown()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+          <span id="rec-label">Sem repetição</span>
+          <svg class="rec-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="rec-dropdown" id="rec-dropdown">
+          <div class="rec-opt selected" data-val="" onclick="selectRec('',this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Sem repetição
+          </div>
+          <div class="rec-opt" data-val="daily" onclick="selectRec('daily',this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Diária
+          </div>
+          <div class="rec-opt" data-val="weekly" onclick="selectRec('weekly',this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+            Semanal
+          </div>
+          <div class="rec-opt" data-val="monthly" onclick="selectRec('monthly',this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+            Mensal
+          </div>
+        </div>
+      </div>
+
       <button class="btn-add" onclick="addTask()">Adicionar</button>
     </div>
 
@@ -658,6 +746,7 @@
   let filter     = 'all';
   let catFilter  = null;
   let selCatId   = null;
+  let selRec     = '';   // '' | 'daily' | 'weekly' | 'monthly'
 
   function save()        { localStorage.setItem('tf_tasks',   JSON.stringify(tasks)); }
   function saveCats()    { localStorage.setItem('tf_cats',    JSON.stringify(categories)); }
@@ -812,15 +901,69 @@
     }
   }
 
+  // ── Recurrence dropdown ───────────────────────────────────────────────────
+  const REC_LABELS = { '': 'Sem repetição', daily: 'Diária', weekly: 'Semanal', monthly: 'Mensal' };
+
+  function toggleRecDropdown() {
+    document.getElementById('rec-dropdown').classList.toggle('open');
+  }
+
+  function selectRec(val, el) {
+    selRec = val;
+    document.getElementById('rec-label').textContent = REC_LABELS[val];
+    document.querySelectorAll('.rec-opt').forEach(o => o.classList.toggle('selected', o.dataset.val === val));
+    document.getElementById('rec-dropdown').classList.remove('open');
+  }
+
+  function calcNextDue(recurrence, from) {
+    const d = new Date(from);
+    if (recurrence === 'daily')   { d.setDate(d.getDate() + 1); d.setHours(0,0,0,0); }
+    if (recurrence === 'weekly')  { d.setDate(d.getDate() + 7); d.setHours(0,0,0,0); }
+    if (recurrence === 'monthly') { d.setMonth(d.getMonth() + 1); d.setHours(0,0,0,0); }
+    return d.getTime();
+  }
+
+  function checkRecurring() {
+    const now = Date.now();
+    let changed = false;
+    tasks.forEach(t => {
+      if (t.recurrence && t.done && t.nextDue && t.nextDue <= now) {
+        t.done = false;
+        t.doneAt = null;
+        t.nextDue = calcNextDue(t.recurrence, now);
+        changed = true;
+      }
+    });
+    if (changed) save();
+  }
+
+  function getDueChip(t) {
+    if (!t.recurrence || t.done) return '';
+    const now = Date.now();
+    const nd  = t.nextDue || now;
+    const todayEnd = new Date(); todayEnd.setHours(23,59,59,999);
+    if (nd < now) return `<span class="due-chip overdue">Vencida</span>`;
+    if (nd <= todayEnd.getTime()) return `<span class="due-chip due-today">Vence hoje</span>`;
+    const days = Math.ceil((nd - now) / 86400000);
+    return `<span class="due-chip upcoming">Em ${days}d</span>`;
+  }
+
   // ── Tasks ─────────────────────────────────────────────────────────────────
   function addTask() {
     const inp = document.getElementById('task-input');
     const txt = inp.value.trim();
     if (!txt) { inp.focus(); return; }
-    tasks.unshift({ id: Date.now(), text: txt, done: false, ts: Date.now(), catId: selCatId });
+    const now = Date.now();
+    const task = {
+      id: now, text: txt, done: false, ts: now, catId: selCatId,
+      recurrence: selRec || null,
+      nextDue: selRec ? calcNextDue(selRec, now) : null
+    };
+    tasks.unshift(task);
     save(); render(); renderSidebar();
     inp.value = ''; inp.focus();
     document.getElementById('cat-dropdown').classList.remove('open');
+    document.getElementById('rec-dropdown').classList.remove('open');
   }
 
   function toggle(id) {
@@ -829,11 +972,26 @@
     t.done = !t.done;
     if (t.done) {
       t.doneAt = Date.now();
-      // upsert into permanent history
-      const exists = history.findIndex(h => h.id === t.id);
-      const snap = { id: t.id, text: t.text, catId: t.catId, ts: t.ts, doneAt: t.doneAt };
+      // log to permanent history
+      const snap = { id: t.id, text: t.text, catId: t.catId, ts: t.ts, doneAt: t.doneAt, recurrence: t.recurrence };
+      const exists = history.findIndex(h => h.id === t.id && h.doneAt === undefined);
       if (exists >= 0) history[exists] = snap; else history.unshift(snap);
       saveHistory();
+
+      // if recurring: reset back to pending after short delay
+      if (t.recurrence) {
+        save(); render();
+        setTimeout(() => {
+          const tr = tasks.find(x => x.id === id);
+          if (!tr) return;
+          tr.done   = false;
+          tr.doneAt = null;
+          tr.nextDue = calcNextDue(tr.recurrence, Date.now());
+          save(); render();
+        }, 900);
+        document.getElementById('sb-history').textContent = history.length;
+        return;
+      }
     } else {
       t.doneAt = null;
     }
@@ -1071,28 +1229,92 @@
     const el = document.createElement('div');
     el.className = 'task-item' + (t.done ? ' done' : '');
     el.dataset.id = t.id;
+    el.draggable = true;
 
     const barColor = cat ? cat.color : 'var(--border)';
     const badgeHtml = cat
       ? `<span class="task-cat-badge" style="background:${cat.color}22;color:${cat.color}">${esc(cat.name)}</span>`
       : '';
 
+    const recMap = { daily: 'Diária', weekly: 'Semanal', monthly: 'Mensal' };
+    const recHtml = t.recurrence
+      ? `<span class="rec-badge ${t.recurrence}">
+           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+           ${recMap[t.recurrence]}
+         </span>`
+      : '';
+    const dueHtml = getDueChip(t);
+
     el.innerHTML = `
+      <span class="drag-handle" title="Arrastar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="5" r="1" fill="currentColor" stroke="none"/>
+          <circle cx="9" cy="12" r="1" fill="currentColor" stroke="none"/>
+          <circle cx="9" cy="19" r="1" fill="currentColor" stroke="none"/>
+          <circle cx="15" cy="5" r="1" fill="currentColor" stroke="none"/>
+          <circle cx="15" cy="12" r="1" fill="currentColor" stroke="none"/>
+          <circle cx="15" cy="19" r="1" fill="currentColor" stroke="none"/>
+        </svg>
+      </span>
       <span class="task-bar" style="background:${barColor}"></span>
       <label class="cb-wrap">
         <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggle(${t.id})"/>
         <span class="cb-box"></span>
       </label>
       <span class="task-txt">${esc(t.text)}</span>
+      ${recHtml}
+      ${dueHtml}
       ${badgeHtml}
       <span class="task-date">${fmtDate(t.ts)}</span>
       <button class="btn-del" onclick="del(${t.id})" title="Remover">✕</button>
     `;
+
     el.addEventListener('click', function(e) {
       if (e.target.classList.contains('btn-del') || e.target.closest('.btn-del')) return;
       if (e.target.closest('.cb-wrap')) return;
+      if (e.target.closest('.drag-handle')) return;
       toggle(t.id);
     });
+
+    // ── Drag events ──
+    el.addEventListener('dragstart', e => {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', t.id);
+      setTimeout(() => el.classList.add('dragging'), 0);
+    });
+
+    el.addEventListener('dragend', () => {
+      el.classList.remove('dragging');
+      document.querySelectorAll('.task-item').forEach(i => i.classList.remove('drag-over'));
+    });
+
+    el.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      document.querySelectorAll('.task-item').forEach(i => i.classList.remove('drag-over'));
+      el.classList.add('drag-over');
+    });
+
+    el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+
+    el.addEventListener('drop', e => {
+      e.preventDefault();
+      el.classList.remove('drag-over');
+      const draggedId = parseInt(e.dataTransfer.getData('text/plain'));
+      const targetId  = t.id;
+      if (draggedId === targetId) return;
+
+      const fromIdx = tasks.findIndex(x => x.id === draggedId);
+      const toIdx   = tasks.findIndex(x => x.id === targetId);
+      if (fromIdx === -1 || toIdx === -1) return;
+
+      // reorder
+      const [moved] = tasks.splice(fromIdx, 1);
+      tasks.splice(toIdx, 0, moved);
+      save();
+      render();
+    });
+
     return el;
   }
 
@@ -1105,13 +1327,17 @@
     if (e.key === 'Enter') addCategory();
   });
 
-  // Close dropdown when clicking outside
+  // Close dropdowns when clicking outside
   document.addEventListener('click', e => {
     const wrap = document.getElementById('cat-select-wrap');
     if (wrap && !wrap.contains(e.target))
       document.getElementById('cat-dropdown').classList.remove('open');
+    const recWrap = document.getElementById('rec-wrap');
+    if (recWrap && !recWrap.contains(e.target))
+      document.getElementById('rec-dropdown').classList.remove('open');
   });
 
+  checkRecurring();
   renderSidebar();
   renderCatDropdown();
   updateCatBtn();
