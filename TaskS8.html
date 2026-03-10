@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TaskS8 — Gerenciador de Tarefas</title>
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #f4f3ef;
+      --card:      #ffffff;
+      --sidebar:   #1c2333;
+      --sidebar-2: #242e44;
+      --accent:    #3b6ff0;
+      --accent-h:  #2f5ed6;
+      --success:   #2ecc8e;
+      --danger:    #e05858;
+      --text:      #1a1f2e;
+      --text-2:    #5a6175;
+      --text-3:    #9098ae;
+      --border:    #e6e4dd;
+      --input-bg:  #fafaf8;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.04);
+      --shadow-md: 0 4px 16px rgba(0,0,0,.08), 0 1px 4px rgba(0,0,0,.04);
+      --r: 10px;
+    }
+
+    body.dark {
+      --bg:        #0f1117;
+      --card:      #181c27;
+      --sidebar:   #10131c;
+      --sidebar-2: #1a1f2e;
+      --text:      #e8eaf0;
+      --text-2:    #8a90a8;
+      --text-3:    #565d78;
+      --border:    #252a3a;
+      --input-bg:  #1e2230;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.3);
+      --shadow-md: 0 4px 16px rgba(0,0,0,.4);
+    }
+
+    body, .sidebar, .main, .kpi, .panel, .task-item, .date-chip, .prog-block, .task-input, .cb-box {
+      transition: background .3s, border-color .3s, color .3s, box-shadow .3s;
+    }
+
+    html { font-size: 16px; }
+    body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Sans', sans-serif; min-height: 100vh; display: flex; }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      background: var(--sidebar);
+      width: 260px; flex-shrink: 0;
+      display: flex; flex-direction: column;
+      padding: 2rem 1.4rem;
+      position: fixed; top: 0; left: 0; bottom: 0;
+      overflow-y: auto; z-index: 10;
+    }
+
+    .logo { display: flex; align-items: center; gap: .65rem; margin-bottom: 2.2rem; }
+    .logo-icon { background: var(--accent); border-radius: 8px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .logo-icon svg { width: 18px; height: 18px; }
+    .logo-name { font-family: 'Libre Baskerville', serif; font-size: 1.15rem; color: #fff; }
+    .logo-name span { color: #7fa8ff; }
+
+    .sb-label {
+      font-size: .67rem; font-weight: 600; letter-spacing: .13em;
+      text-transform: uppercase; color: var(--text-3);
+      margin: 1.3rem 0 .45rem .3rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    .sb-label button {
+      background: none; border: none; color: var(--text-3); cursor: pointer;
+      font-size: .8rem; line-height: 1; padding: .1rem .3rem; border-radius: 4px;
+      transition: color .15s, background .15s;
+    }
+    .sb-label button:hover { color: #7fa8ff; background: rgba(255,255,255,.06); }
+
+    .sb-item {
+      align-items: center; border-radius: 8px; color: #8490a8; cursor: pointer;
+      display: flex; font-size: .86rem; font-weight: 400; gap: .6rem;
+      padding: .52rem .75rem; transition: background .15s, color .15s; user-select: none;
+    }
+    .sb-item:hover { background: var(--sidebar-2); color: #cdd3e0; }
+    .sb-item.active { background: rgba(59,111,240,.18); color: #7fa8ff; font-weight: 500; }
+    .sb-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+    .sb-badge {
+      background: var(--sidebar-2); border-radius: 999px; color: var(--text-3);
+      font-size: .68rem; font-weight: 600; margin-left: auto;
+      min-width: 20px; padding: .1rem .45rem; text-align: center;
+    }
+    .sb-item.active .sb-badge { background: rgba(59,111,240,.3); color: #7fa8ff; }
+
+    /* Category items in sidebar */
+    .sb-cat {
+      align-items: center; border-radius: 8px; color: #8490a8; cursor: pointer;
+      display: flex; font-size: .84rem; font-weight: 400; gap: .65rem;
+      padding: .48rem .75rem; transition: background .15s, color .15s;
+      user-select: none; position: relative;
+    }
+    .sb-cat:hover { background: var(--sidebar-2); color: #cdd3e0; }
+    .sb-cat.active { color: #fff; font-weight: 500; }
+
+    .cat-dot {
+      border-radius: 50%; flex-shrink: 0; height: 9px; width: 9px;
+    }
+
+    .sb-cat .sb-badge { background: var(--sidebar-2); }
+    .sb-cat.active .sb-badge { opacity: .8; }
+
+    .sb-cat .cat-del {
+      background: none; border: none; color: transparent; cursor: pointer;
+      font-size: .75rem; margin-left: .2rem; padding: .1rem .25rem;
+      border-radius: 4px; transition: all .15s; flex-shrink: 0;
+    }
+    .sb-cat:hover .cat-del { color: #565d78; }
+    .sb-cat:hover .cat-del:hover { color: var(--danger); background: rgba(224,88,88,.12); }
+
+    /* New category inline form */
+    .new-cat-form {
+      display: none; align-items: center; gap: .4rem;
+      padding: .3rem .4rem; margin-top: .2rem;
+    }
+    .new-cat-form.open { display: flex; }
+
+    .cat-color-pick {
+      border: none; border-radius: 50%; cursor: pointer;
+      height: 24px; width: 24px; padding: 0; flex-shrink: 0;
+      outline: 2px solid rgba(255,255,255,.1);
+    }
+
+    .new-cat-input {
+      background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1);
+      border-radius: 6px; color: #cdd3e0; flex: 1; font-family: 'IBM Plex Sans', sans-serif;
+      font-size: .8rem; outline: none; padding: .3rem .6rem;
+      transition: border-color .15s;
+    }
+    .new-cat-input:focus { border-color: rgba(127,168,255,.4); }
+    .new-cat-input::placeholder { color: #565d78; }
+
+    .new-cat-btn {
+      background: var(--accent); border: none; border-radius: 6px; color: #fff;
+      cursor: pointer; font-family: 'IBM Plex Sans', sans-serif; font-size: .75rem;
+      font-weight: 600; padding: .3rem .6rem; transition: background .15s;
+    }
+    .new-cat-btn:hover { background: var(--accent-h); }
+
+    /* Settings / footer */
+    .pref-row {
+      align-items: center; border-radius: 8px; display: flex; gap: .6rem;
+      padding: .52rem .75rem; cursor: pointer; user-select: none; transition: background .15s;
+    }
+    .pref-row:hover { background: var(--sidebar-2); }
+    .pref-row svg { width: 16px; height: 16px; flex-shrink: 0; color: #8490a8; }
+    .pref-label { color: #8490a8; font-size: .86rem; flex: 1; }
+
+    .toggle-track {
+      background: #2e3650; border-radius: 999px; cursor: pointer;
+      height: 20px; position: relative; transition: background .25s; width: 36px; flex-shrink: 0;
+    }
+    .toggle-track.on { background: var(--accent); }
+    .toggle-thumb {
+      background: #fff; border-radius: 50%; height: 14px; left: 3px; position: absolute;
+      top: 3px; transition: transform .25s cubic-bezier(.22,1,.36,1); width: 14px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.3);
+    }
+    .toggle-track.on .toggle-thumb { transform: translateX(16px); }
+
+    .sb-footer {
+      margin-top: auto; padding-top: 1.2rem;
+      border-top: 1px solid rgba(255,255,255,.06);
+    }
+    .version-badge {
+      display: flex; align-items: center; gap: .5rem; color: #565d78;
+      font-size: .75rem; font-weight: 500; padding: .3rem .2rem;
+    }
+    .version-badge span { color: var(--accent); font-weight: 600; }
+
+    /* ── MAIN ── */
+    .main { margin-left: 260px; flex: 1; padding: 2.5rem 2.8rem; min-height: 100vh; }
+
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 2rem; animation: fadeUp .45s ease both;
+    }
+    .page-title { font-family: 'Libre Baskerville', serif; font-size: 1.75rem; font-weight: 700; letter-spacing: -.02em; }
+    .page-sub { color: var(--text-2); font-size: .84rem; margin-top: .2rem; }
+    .date-chip {
+      background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+      box-shadow: var(--shadow-sm); color: var(--text-2); font-size: .8rem; padding: .5rem .9rem;
+    }
+
+    /* ── KPI ── */
+    .kpi-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; margin-bottom: 1.8rem; animation: fadeUp .45s .07s ease both; }
+    .kpi { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); box-shadow: var(--shadow-sm); padding: 1.2rem 1.4rem; overflow: hidden; position: relative; }
+    .kpi::after { content: ''; border-radius: 50%; height: 80px; width: 80px; position: absolute; right: -20px; top: -20px; opacity: .06; }
+    .kpi.c1::after { background: #3b6ff0; }
+    .kpi.c2::after { background: #2ecc8e; }
+    .kpi.c3::after { background: #f0a53b; }
+    .kpi-lbl { color: var(--text-2); font-size: .72rem; font-weight: 500; letter-spacing: .05em; text-transform: uppercase; margin-bottom: .45rem; }
+    .kpi-val { font-family: 'Libre Baskerville', serif; font-size: 2rem; font-weight: 700; line-height: 1; }
+    .kpi.c1 .kpi-val { color: var(--accent); }
+    .kpi.c2 .kpi-val { color: var(--success); }
+    .kpi.c3 .kpi-val { color: #f0a53b; }
+    .kpi-sub { color: var(--text-3); font-size: .72rem; margin-top: .3rem; }
+
+    /* ── PANEL ── */
+    .panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); box-shadow: var(--shadow-md); padding: 1.6rem; animation: fadeUp .45s .13s ease both; }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.3rem; }
+    .panel-title { font-size: .95rem; font-weight: 600; }
+    .filter-bar { display: flex; gap: .35rem; }
+    .fpill {
+      background: transparent; border: 1.5px solid var(--border); border-radius: 999px;
+      color: var(--text-2); cursor: pointer; font-family: 'IBM Plex Sans', sans-serif;
+      font-size: .76rem; font-weight: 500; padding: .28rem .82rem; transition: all .15s;
+    }
+    .fpill:hover { border-color: var(--accent); color: var(--accent); }
+    .fpill.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    /* ── INPUT ROW ── */
+    .input-row { display: flex; gap: .6rem; margin-bottom: 1.2rem; }
+    .inp-wrap { flex: 1; position: relative; }
+    .inp-wrap > svg { left: .85rem; pointer-events: none; position: absolute; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: var(--text-3); }
+
+    .task-input {
+      background: var(--input-bg); border: 1.5px solid var(--border); border-radius: var(--r);
+      color: var(--text); font-family: 'IBM Plex Sans', sans-serif; font-size: .875rem;
+      outline: none; padding: .75rem 1rem .75rem 2.4rem; transition: border-color .2s, box-shadow .2s; width: 100%;
+    }
+    .task-input::placeholder { color: var(--text-3); }
+    .task-input:focus { background: var(--card); border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,111,240,.1); }
+
+    /* Category selector */
+    .cat-select-wrap { position: relative; flex-shrink: 0; }
+
+    .cat-select-btn {
+      align-items: center; background: var(--input-bg); border: 1.5px solid var(--border);
+      border-radius: var(--r); color: var(--text-2); cursor: pointer; display: flex;
+      font-family: 'IBM Plex Sans', sans-serif; font-size: .8rem; font-weight: 500;
+      gap: .45rem; height: 100%; padding: 0 .9rem; transition: border-color .2s, box-shadow .2s;
+      white-space: nowrap; min-width: 130px;
+    }
+    .cat-select-btn:hover { border-color: var(--accent); }
+    .cat-select-btn .btn-dot { border-radius: 50%; height: 9px; width: 9px; flex-shrink: 0; background: var(--text-3); }
+    .cat-select-btn svg { width: 12px; height: 12px; margin-left: auto; opacity: .5; }
+
+    .cat-dropdown {
+      background: var(--card); border: 1px solid var(--border); border-radius: var(--r);
+      box-shadow: var(--shadow-md); display: none; left: 0; min-width: 170px;
+      position: absolute; top: calc(100% + 6px); z-index: 50; overflow: hidden;
+    }
+    .cat-dropdown.open { display: block; }
+
+    .cat-opt {
+      align-items: center; cursor: pointer; display: flex; font-size: .84rem;
+      gap: .6rem; padding: .6rem .9rem; transition: background .12s; color: var(--text);
+    }
+    .cat-opt:hover { background: var(--input-bg); }
+    .cat-opt.selected { font-weight: 600; color: var(--accent); }
+    .cat-opt .opt-dot { border-radius: 50%; height: 8px; width: 8px; flex-shrink: 0; }
+
+    .btn-add {
+      background: var(--accent); border: none; border-radius: var(--r); color: #fff;
+      cursor: pointer; font-family: 'IBM Plex Sans', sans-serif; font-size: .875rem;
+      font-weight: 600; padding: .75rem 1.4rem; transition: background .15s, box-shadow .15s, transform .1s; white-space: nowrap;
+    }
+    .btn-add:hover { background: var(--accent-h); box-shadow: 0 4px 14px rgba(59,111,240,.35); }
+    .btn-add:active { transform: scale(.97); }
+
+    /* ── PROGRESS ── */
+    .prog-block { display: flex; align-items: center; gap: 1rem; background: var(--input-bg); border: 1px solid var(--border); border-radius: var(--r); padding: .85rem 1.1rem; margin-bottom: 1.2rem; }
+    .prog-info { flex: 1; }
+    .prog-lbl { color: var(--text-2); font-size: .76rem; font-weight: 500; margin-bottom: .4rem; }
+    .prog-track { background: var(--border); border-radius: 999px; height: 6px; overflow: hidden; }
+    .prog-fill { background: linear-gradient(90deg, var(--accent), #7fa8ff); border-radius: 999px; height: 100%; transition: width .6s cubic-bezier(.22,1,.36,1); }
+    .prog-pct { font-family: 'Libre Baskerville', serif; font-size: 1.3rem; font-weight: 700; color: var(--accent); min-width: 46px; text-align: right; }
+
+    /* ── GROUP HEADER ── */
+    .group-header {
+      align-items: center; display: flex; gap: .6rem;
+      margin: 1.1rem 0 .5rem;
+    }
+    .group-header:first-child { margin-top: 0; }
+    .group-dot { border-radius: 50%; height: 10px; width: 10px; flex-shrink: 0; }
+    .group-name { font-size: .78rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--text-2); }
+    .group-count { color: var(--text-3); font-size: .72rem; }
+    .group-line { flex: 1; height: 1px; background: var(--border); }
+
+    /* ── TASK ITEMS ── */
+    .task-list { display: flex; flex-direction: column; }
+
+    .task-item {
+      align-items: center; background: var(--input-bg); border: 1px solid var(--border);
+      border-radius: var(--r); display: flex; gap: .85rem; padding: .82rem 1rem;
+      transition: border-color .2s, box-shadow .2s, opacity .3s; cursor: pointer;
+      animation: taskIn .3s cubic-bezier(.22,1,.36,1) both; margin-bottom: .45rem;
+    }
+    .task-item:hover { border-color: #d0cecc; box-shadow: var(--shadow-sm); }
+    .task-item.done { opacity: .45; }
+    .task-item.done .task-txt { text-decoration: line-through; color: var(--text-3); }
+
+    /* left color bar */
+    .task-bar { border-radius: 999px; flex-shrink: 0; height: 28px; width: 3px; }
+
+    .cb-wrap { flex-shrink: 0; position: relative; width: 20px; height: 20px; }
+    .cb-wrap input { cursor: pointer; inset: 0; opacity: 0; position: absolute; width: 100%; height: 100%; z-index: 2; }
+    .cb-box { background: var(--card); border: 2px solid #c8c6c0; border-radius: 5px; height: 20px; width: 20px; left: 0; top: 0; position: absolute; transition: all .18s; }
+    .cb-wrap input:checked ~ .cb-box { background: var(--success); border-color: var(--success); }
+    .cb-box::after { border: 2px solid #fff; border-top: none; border-right: none; content: ''; height: 4px; width: 9px; left: 3px; top: 5px; opacity: 0; position: absolute; transform: rotate(-46deg) scale(.6); transition: all .15s; }
+    .cb-wrap input:checked ~ .cb-box::after { opacity: 1; transform: rotate(-46deg) scale(1); }
+
+    .task-txt { flex: 1; font-size: .875rem; color: var(--text); word-break: break-word; line-height: 1.4; }
+
+    .task-cat-badge {
+      border-radius: 999px; font-size: .68rem; font-weight: 600;
+      padding: .2rem .65rem; white-space: nowrap; opacity: .85;
+    }
+
+    .task-date { color: var(--text-3); font-size: .72rem; white-space: nowrap; }
+
+    .btn-del {
+      background: transparent; border: none; border-radius: 6px; color: var(--text-3);
+      cursor: pointer; flex-shrink: 0; font-size: .85rem; opacity: 0; padding: .25rem .4rem; transition: all .15s;
+    }
+    .task-item:hover .btn-del { opacity: 1; }
+    .btn-del:hover { background: #ffe8e8; color: var(--danger); }
+
+    /* ── EMPTY ── */
+    .empty { display: none; padding: 2.5rem 1rem; text-align: center; }
+    .empty-ico { background: #f0f3ff; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1rem; padding: 1rem; }
+    .empty-ico svg { color: var(--accent); opacity: .5; width: 26px; height: 26px; }
+    .empty p { color: var(--text-2); font-size: .84rem; line-height: 1.7; }
+
+    /* ── FOOTER ── */
+    .panel-foot { align-items: center; border-top: 1px solid var(--border); display: flex; justify-content: space-between; margin-top: 1rem; padding-top: 1rem; }
+    .foot-note { color: var(--text-3); font-size: .74rem; }
+    .btn-clear { background: transparent; border: 1.5px solid var(--border); border-radius: 999px; color: var(--text-2); cursor: pointer; font-family: 'IBM Plex Sans', sans-serif; font-size: .74rem; font-weight: 500; padding: .28rem .9rem; transition: all .15s; }
+    .btn-clear:hover { border-color: var(--danger); color: var(--danger); }
+
+    /* ── HISTORY PANEL ── */
+    #page-dashboard, #page-history { display: block; }
+
+    .hist-panel {
+      background: var(--card); border: 1px solid var(--border); border-radius: var(--r);
+      box-shadow: var(--shadow-md); padding: 1.6rem; animation: fadeUp .45s .1s ease both;
+    }
+
+    .hist-toolbar {
+      display: flex; align-items: center; gap: .8rem; margin-bottom: 1.3rem; flex-wrap: wrap;
+    }
+
+    .hist-title { font-size: .95rem; font-weight: 600; flex: 1; }
+
+    .hist-search-wrap { position: relative; }
+    .hist-search-wrap svg { left: .75rem; pointer-events: none; position: absolute; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: var(--text-3); }
+    .hist-search {
+      background: var(--input-bg); border: 1.5px solid var(--border); border-radius: 8px;
+      color: var(--text); font-family: 'IBM Plex Sans', sans-serif; font-size: .8rem;
+      outline: none; padding: .5rem .9rem .5rem 2.1rem; transition: border-color .2s;
+      width: 200px;
+    }
+    .hist-search:focus { border-color: var(--accent); }
+    .hist-search::placeholder { color: var(--text-3); }
+
+    .hist-filter-cat {
+      background: var(--input-bg); border: 1.5px solid var(--border); border-radius: 8px;
+      color: var(--text-2); cursor: pointer; font-family: 'IBM Plex Sans', sans-serif;
+      font-size: .8rem; outline: none; padding: .5rem .8rem; transition: border-color .2s;
+    }
+    .hist-filter-cat:focus { border-color: var(--accent); }
+
+    .btn-clear-hist {
+      background: transparent; border: 1.5px solid var(--border); border-radius: 999px;
+      color: var(--text-2); cursor: pointer; font-family: 'IBM Plex Sans', sans-serif;
+      font-size: .74rem; font-weight: 500; padding: .3rem .9rem; transition: all .15s;
+      white-space: nowrap;
+    }
+    .btn-clear-hist:hover { border-color: var(--danger); color: var(--danger); }
+
+    /* Table */
+    .hist-table-wrap { overflow-x: auto; }
+
+    .hist-table {
+      border-collapse: collapse; width: 100%; font-size: .84rem;
+    }
+
+    .hist-table thead tr {
+      border-bottom: 2px solid var(--border);
+    }
+
+    .hist-table th {
+      color: var(--text-3); font-size: .7rem; font-weight: 600; letter-spacing: .07em;
+      text-transform: uppercase; padding: .5rem .9rem; text-align: left; white-space: nowrap;
+    }
+
+    .hist-table tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background .12s;
+    }
+    .hist-table tbody tr:last-child { border-bottom: none; }
+    .hist-table tbody tr:hover { background: var(--input-bg); }
+
+    .hist-table td { padding: .75rem .9rem; vertical-align: middle; }
+
+    .hist-check {
+      background: rgba(46,204,142,.15); border-radius: 50%;
+      color: var(--success); display: inline-flex; align-items: center; justify-content: center;
+      height: 22px; width: 22px; flex-shrink: 0;
+    }
+    .hist-check svg { width: 12px; height: 12px; }
+
+    .hist-task-name { color: var(--text); font-weight: 400; }
+
+    .hist-cat-badge {
+      border-radius: 999px; font-size: .67rem; font-weight: 600;
+      padding: .18rem .6rem; white-space: nowrap;
+    }
+
+    .hist-date { color: var(--text-2); font-size: .78rem; white-space: nowrap; }
+    .hist-duration { color: var(--text-3); font-size: .76rem; white-space: nowrap; }
+
+    .hist-empty { text-align: center; padding: 2.5rem; color: var(--text-3); font-size: .85rem; }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes taskIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes taskOut { to { opacity: 0; transform: translateX(14px); max-height: 0; padding: 0; margin: 0; border: none; } }
+    .removing { animation: taskOut .28s ease forwards; overflow: hidden; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; padding: 1.4rem 1rem; }
+      .kpi-row { grid-template-columns: repeat(3,1fr); gap: .6rem; }
+      .kpi-val { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 11 12 14 22 4"/>
+        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+      </svg>
+    </div>
+    <span class="logo-name">Task<span>S8</span></span>
+  </div>
+
+  <span class="sb-label">Menu</span>
+
+  <div class="sb-item active" id="sb-item-all" onclick="setSidebarFilter('all')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+      <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+    </svg>
+    Dashboard
+    <span class="sb-badge" id="sb-all">0</span>
+  </div>
+
+  <div class="sb-item" id="sb-item-pending" onclick="setSidebarFilter('pending')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+    </svg>
+    Pendentes
+    <span class="sb-badge" id="sb-pending">0</span>
+  </div>
+
+  <div class="sb-item" id="sb-item-done" onclick="setSidebarFilter('done')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="20 6 9 17 4 12"/>
+    </svg>
+    Concluídas
+    <span class="sb-badge" id="sb-done">0</span>
+  </div>
+
+  <div class="sb-item" id="sb-item-history" onclick="showPage('history')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <polyline points="12 8 12 12 14 14"/>
+      <path d="M3.05 11a9 9 0 1 1 .5 4"/>
+      <polyline points="3 16 3.05 11 8 11"/>
+    </svg>
+    Histórico
+    <span class="sb-badge" id="sb-history">0</span>
+  </div>
+
+  <!-- CATEGORIES -->
+  <span class="sb-label">
+    Grupos
+    <button onclick="toggleNewCatForm()" title="Novo grupo">＋</button>
+  </span>
+
+  <div class="new-cat-form" id="new-cat-form">
+    <input type="color" class="cat-color-pick" id="new-cat-color" value="#3b6ff0"/>
+    <input class="new-cat-input" id="new-cat-name" placeholder="Nome do grupo..." maxlength="24"/>
+    <button class="new-cat-btn" onclick="addCategory()">OK</button>
+  </div>
+
+  <div id="cat-list-sidebar"></div>
+
+  <span class="sb-label" style="margin-top:1.5rem">Configurações</span>
+
+  <div class="pref-row" onclick="toggleDark()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+    </svg>
+    <span class="pref-label">Tema Escuro</span>
+    <div class="toggle-track" id="dark-toggle"><div class="toggle-thumb"></div></div>
+  </div>
+
+  <div class="sb-footer">
+    <div class="version-badge">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;opacity:.5">
+        <polyline points="9 11 12 14 22 4"/>
+        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+      </svg>
+      TaskS8 <span>v1.0.2</span>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div>
+      <h1 class="page-title" id="page-title">Minhas Tarefas</h1>
+      <p class="page-sub" id="page-sub">Gerencie suas atividades do dia</p>
+    </div>
+    <div class="date-chip" id="date-chip"></div>
+  </div>
+
+  <!-- DASHBOARD PAGE -->
+  <div id="page-dashboard">
+
+  <div class="kpi-row">
+    <div class="kpi c1">
+      <div class="kpi-lbl">Total</div>
+      <div class="kpi-val" id="kpi-total">0</div>
+      <div class="kpi-sub">tarefas cadastradas</div>
+    </div>
+    <div class="kpi c2">
+      <div class="kpi-lbl">Concluídas</div>
+      <div class="kpi-val" id="kpi-done">0</div>
+      <div class="kpi-sub">finalizadas</div>
+    </div>
+    <div class="kpi c3">
+      <div class="kpi-lbl">Pendentes</div>
+      <div class="kpi-val" id="kpi-pending">0</div>
+      <div class="kpi-sub">aguardando ação</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <span class="panel-title">Lista de Tarefas</span>
+      <div class="filter-bar">
+        <button class="fpill active" onclick="setFilter('all',this)">Todas</button>
+        <button class="fpill" onclick="setFilter('pending',this)">Pendentes</button>
+        <button class="fpill" onclick="setFilter('done',this)">Concluídas</button>
+      </div>
+    </div>
+
+    <div class="input-row">
+      <div class="inp-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        <input class="task-input" id="task-input" type="text" placeholder="Descreva uma nova tarefa..." maxlength="140" autocomplete="off"/>
+      </div>
+
+      <!-- Category picker -->
+      <div class="cat-select-wrap" id="cat-select-wrap">
+        <button class="cat-select-btn" id="cat-select-btn" onclick="toggleCatDropdown()">
+          <span class="btn-dot" id="btn-dot"></span>
+          <span id="btn-cat-label">Sem grupo</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="cat-dropdown" id="cat-dropdown"></div>
+      </div>
+
+      <button class="btn-add" onclick="addTask()">Adicionar</button>
+    </div>
+
+    <div class="prog-block">
+      <div class="prog-info">
+        <div class="prog-lbl">Progresso geral</div>
+        <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+      </div>
+      <div class="prog-pct" id="prog-pct">0%</div>
+    </div>
+
+    <div class="task-list" id="task-list"></div>
+
+    <div class="empty" id="empty-state">
+      <div class="empty-ico">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+          <rect x="9" y="3" width="6" height="4" rx="2"/>
+          <line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/>
+        </svg>
+      </div>
+      <p>Nenhuma tarefa encontrada.<br/>Adicione uma acima para começar.</p>
+    </div>
+
+    <div class="panel-foot">
+      <span class="foot-note" id="foot-note">0 itens</span>
+      <button class="btn-clear" onclick="clearDone()">Limpar concluídas</button>
+    </div>
+  </div>
+  </div><!-- end #page-dashboard -->
+
+  <!-- HISTORY PAGE -->
+  <div id="page-history" style="display:none">
+    <div class="hist-panel">
+      <div class="hist-toolbar">
+        <span class="hist-title">Histórico de Tarefas Concluídas</span>
+        <div class="hist-search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input class="hist-search" id="hist-search" type="text" placeholder="Buscar tarefa..." oninput="renderHistory()"/>
+        </div>
+        <select class="hist-filter-cat" id="hist-cat-filter" onchange="renderHistory()">
+          <option value="">Todos os grupos</option>
+        </select>
+        <button class="btn-clear-hist" onclick="clearHistory()">Limpar histórico</button>
+      </div>
+      <div class="hist-table-wrap">
+        <table class="hist-table">
+          <thead>
+            <tr>
+              <th style="width:32px"></th>
+              <th>Tarefa</th>
+              <th>Grupo</th>
+              <th>Criada em</th>
+              <th>Concluída em</th>
+              <th>Duração</th>
+            </tr>
+          </thead>
+          <tbody id="hist-tbody"></tbody>
+        </table>
+        <div class="hist-empty" id="hist-empty" style="display:none">Nenhuma tarefa concluída ainda.</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+  // ── State ──────────────────────────────────────────────────────────────────
+  let tasks      = JSON.parse(localStorage.getItem('tf_tasks')   || '[]');
+  let categories = JSON.parse(localStorage.getItem('tf_cats')    || '[]');
+  let history    = JSON.parse(localStorage.getItem('tf_history') || '[]');
+  let filter     = 'all';
+  let catFilter  = null;
+  let selCatId   = null;
+
+  function save()        { localStorage.setItem('tf_tasks',   JSON.stringify(tasks)); }
+  function saveCats()    { localStorage.setItem('tf_cats',    JSON.stringify(categories)); }
+  function saveHistory() { localStorage.setItem('tf_history', JSON.stringify(history)); }
+
+  // ── Dark mode ──────────────────────────────────────────────────────────────
+  function applyDark(on) {
+    document.body.classList.toggle('dark', on);
+    document.getElementById('dark-toggle').classList.toggle('on', on);
+  }
+  function toggleDark() {
+    const d = !document.body.classList.contains('dark');
+    localStorage.setItem('tf_dark', d ? '1' : '0');
+    applyDark(d);
+  }
+  applyDark(localStorage.getItem('tf_dark') === '1');
+
+  // ── Date chip ──────────────────────────────────────────────────────────────
+  const MONTHS = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  const DAYS   = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  const _now   = new Date();
+  const _mn    = MONTHS[_now.getMonth()];
+  document.getElementById('date-chip').textContent =
+    `${DAYS[_now.getDay()]}, ${_now.getDate()} de ${_mn.charAt(0).toUpperCase()+_mn.slice(1)}.`;
+
+  // ── Categories ────────────────────────────────────────────────────────────
+  function toggleNewCatForm() {
+    const f = document.getElementById('new-cat-form');
+    f.classList.toggle('open');
+    if (f.classList.contains('open')) document.getElementById('new-cat-name').focus();
+  }
+
+  function addCategory() {
+    const name  = document.getElementById('new-cat-name').value.trim();
+    const color = document.getElementById('new-cat-color').value;
+    if (!name) return;
+    categories.push({ id: Date.now(), name, color });
+    saveCats();
+    document.getElementById('new-cat-name').value = '';
+    document.getElementById('new-cat-form').classList.remove('open');
+    renderSidebar();
+    renderCatDropdown();
+  }
+
+  function deleteCategory(id) {
+    categories = categories.filter(c => c.id !== id);
+    // remove cat from tasks
+    tasks.forEach(t => { if (t.catId === id) t.catId = null; });
+    save(); saveCats();
+    if (catFilter === id) catFilter = null;
+    if (selCatId  === id) { selCatId = null; updateCatBtn(); }
+    renderSidebar(); renderCatDropdown(); render();
+  }
+
+  function getCat(id) { return categories.find(c => c.id === id) || null; }
+
+  // ── Category dropdown (for new task) ──────────────────────────────────────
+  function toggleCatDropdown() {
+    document.getElementById('cat-dropdown').classList.toggle('open');
+  }
+
+  function selectCat(id) {
+    selCatId = id;
+    updateCatBtn();
+    document.getElementById('cat-dropdown').classList.remove('open');
+  }
+
+  function updateCatBtn() {
+    const dot   = document.getElementById('btn-dot');
+    const label = document.getElementById('btn-cat-label');
+    const cat   = getCat(selCatId);
+    if (cat) {
+      dot.style.background = cat.color;
+      label.textContent    = cat.name;
+    } else {
+      dot.style.background = 'var(--text-3)';
+      label.textContent    = 'Sem grupo';
+    }
+    // refresh selected state in dropdown
+    document.querySelectorAll('.cat-opt').forEach(opt => {
+      const oid = opt.dataset.id ? parseInt(opt.dataset.id) : null;
+      opt.classList.toggle('selected', oid === selCatId);
+    });
+  }
+
+  function renderCatDropdown() {
+    const dd = document.getElementById('cat-dropdown');
+    dd.innerHTML = '';
+
+    const none = document.createElement('div');
+    none.className = 'cat-opt' + (selCatId === null ? ' selected' : '');
+    none.innerHTML = `<span class="opt-dot" style="background:var(--text-3)"></span>Sem grupo`;
+    none.onclick = () => selectCat(null);
+    dd.appendChild(none);
+
+    categories.forEach(c => {
+      const opt = document.createElement('div');
+      opt.className = 'cat-opt' + (selCatId === c.id ? ' selected' : '');
+      opt.dataset.id = c.id;
+      opt.innerHTML = `<span class="opt-dot" style="background:${c.color}"></span>${esc(c.name)}`;
+      opt.onclick = () => selectCat(c.id);
+      dd.appendChild(opt);
+    });
+  }
+
+  // ── Sidebar categories list ────────────────────────────────────────────────
+  function renderSidebar() {
+    const container = document.getElementById('cat-list-sidebar');
+    container.innerHTML = '';
+
+    categories.forEach(c => {
+      const count = tasks.filter(t => t.catId === c.id).length;
+      const isActive = catFilter === c.id;
+      const div = document.createElement('div');
+      div.className = 'sb-cat' + (isActive ? ' active' : '');
+      div.style.cssText = isActive ? `background: ${c.color}22;` : '';
+      div.innerHTML = `
+        <span class="cat-dot" style="background:${c.color}"></span>
+        <span style="flex:1">${esc(c.name)}</span>
+        <span class="sb-badge">${count}</span>
+        <button class="cat-del" onclick="event.stopPropagation();deleteCategory(${c.id})" title="Excluir grupo">✕</button>
+      `;
+      div.onclick = () => filterByCat(c.id);
+      container.appendChild(div);
+    });
+  }
+
+  function filterByCat(id) {
+    catFilter = catFilter === id ? null : id;
+    // clear status filter
+    filter = 'all';
+    document.querySelectorAll('.fpill').forEach(b => b.classList.remove('active'));
+    document.querySelector('.fpill').classList.add('active');
+    ['all','pending','done'].forEach(k => {
+      document.getElementById('sb-item-'+k).classList.toggle('active', k === 'all' && catFilter === null);
+    });
+    renderSidebar();
+    updatePageTitle();
+    render();
+  }
+
+  function updatePageTitle() {
+    const title = document.getElementById('page-title');
+    const sub   = document.getElementById('page-sub');
+    if (catFilter) {
+      const cat = getCat(catFilter);
+      title.textContent = cat ? cat.name : 'Minhas Tarefas';
+      sub.textContent   = 'Tarefas do grupo selecionado';
+    } else {
+      title.textContent = 'Minhas Tarefas';
+      sub.textContent   = 'Gerencie suas atividades do dia';
+    }
+  }
+
+  // ── Tasks ─────────────────────────────────────────────────────────────────
+  function addTask() {
+    const inp = document.getElementById('task-input');
+    const txt = inp.value.trim();
+    if (!txt) { inp.focus(); return; }
+    tasks.unshift({ id: Date.now(), text: txt, done: false, ts: Date.now(), catId: selCatId });
+    save(); render(); renderSidebar();
+    inp.value = ''; inp.focus();
+    document.getElementById('cat-dropdown').classList.remove('open');
+  }
+
+  function toggle(id) {
+    const t = tasks.find(t => t.id === id);
+    if (!t) return;
+    t.done = !t.done;
+    if (t.done) {
+      t.doneAt = Date.now();
+      // upsert into permanent history
+      const exists = history.findIndex(h => h.id === t.id);
+      const snap = { id: t.id, text: t.text, catId: t.catId, ts: t.ts, doneAt: t.doneAt };
+      if (exists >= 0) history[exists] = snap; else history.unshift(snap);
+      saveHistory();
+    } else {
+      t.doneAt = null;
+    }
+    save(); render();
+    document.getElementById('sb-history').textContent = history.length;
+  }
+
+  function del(id) {
+    const el = document.querySelector(`[data-id="${id}"]`);
+    if (el) {
+      el.classList.add('removing');
+      el.addEventListener('animationend', () => {
+        tasks = tasks.filter(t => t.id !== id);
+        save(); render(); renderSidebar();
+      }, { once: true });
+    }
+  }
+
+  function setFilter(f, btn) {
+    filter = f; catFilter = null;
+    document.querySelectorAll('.fpill').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    ['all','pending','done'].forEach(k =>
+      document.getElementById('sb-item-'+k).classList.toggle('active', k === f)
+    );
+    renderSidebar(); updatePageTitle(); render();
+  }
+
+  function setSidebarFilter(f) {
+    showPage('dashboard');
+    filter = f; catFilter = null;
+    ['all','pending','done'].forEach(k =>
+      document.getElementById('sb-item-'+k).classList.toggle('active', k === f)
+    );
+    document.getElementById('sb-item-history').classList.remove('active');
+    document.querySelectorAll('.fpill').forEach(btn => {
+      const map = { all:'Todas', pending:'Pendentes', done:'Concluídas' };
+      btn.classList.toggle('active', btn.textContent.trim() === map[f]);
+    });
+    renderSidebar(); updatePageTitle(); render();
+  }
+
+  function clearDone() {
+    tasks = tasks.filter(t => !t.done);
+    save(); render(); renderSidebar();
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  function fmtDate(ts) {
+    return new Date(ts).toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit' });
+  }
+  function esc(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function hexToRgb(hex) {
+    const r = parseInt(hex.slice(1,3),16);
+    const g = parseInt(hex.slice(3,5),16);
+    const b = parseInt(hex.slice(5,7),16);
+    return `${r},${g},${b}`;
+  }
+
+  // ── Render ────────────────────────────────────────────────────────────────
+  // ── Page switching ────────────────────────────────────────────────────────
+  let currentPage = 'dashboard';
+
+  function showPage(page) {
+    currentPage = page;
+    document.getElementById('page-dashboard').style.display = page === 'dashboard' ? 'block' : 'none';
+    document.getElementById('page-history').style.display   = page === 'history'   ? 'block' : 'none';
+    document.getElementById('sb-item-history').classList.toggle('active', page === 'history');
+
+    if (page === 'history') {
+      ['all','pending','done'].forEach(k =>
+        document.getElementById('sb-item-'+k).classList.remove('active')
+      );
+      document.getElementById('page-title').textContent = 'Histórico';
+      document.getElementById('page-sub').textContent   = 'Registro de todas as tarefas concluídas';
+      renderHistoryCatFilter();
+      renderHistory();
+    }
+  }
+
+  function renderHistoryCatFilter() {
+    const sel = document.getElementById('hist-cat-filter');
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">Todos os grupos</option>';
+    categories.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id; opt.textContent = c.name;
+      if (String(c.id) === cur) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
+
+  function renderHistory() {
+    const query = (document.getElementById('hist-search').value || '').toLowerCase();
+    const catId = document.getElementById('hist-cat-filter').value;
+    const tbody = document.getElementById('hist-tbody');
+    const empty = document.getElementById('hist-empty');
+
+    let entries = [...history];
+    if (catId) entries = entries.filter(h => String(h.catId) === catId);
+    if (query) entries = entries.filter(h => h.text.toLowerCase().includes(query));
+    entries.sort((a, b) => (b.doneAt || b.ts) - (a.doneAt || a.ts));
+
+    tbody.innerHTML = '';
+
+    if (entries.length === 0) {
+      empty.style.display = 'block';
+      return;
+    }
+    empty.style.display = 'none';
+
+    entries.forEach(h => {
+      const cat      = getCat(h.catId);
+      const created  = fmtDateFull(h.ts);
+      const finished = h.doneAt ? fmtDateFull(h.doneAt) : '—';
+      const duration = h.doneAt ? calcDuration(h.ts, h.doneAt) : '—';
+      const badgeHtml = cat
+        ? `<span class="hist-cat-badge" style="background:${cat.color}22;color:${cat.color}">${esc(cat.name)}</span>`
+        : `<span style="color:var(--text-3);font-size:.76rem">—</span>`;
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>
+          <span class="hist-check">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+        </td>
+        <td class="hist-task-name">${esc(h.text)}</td>
+        <td>${badgeHtml}</td>
+        <td class="hist-date">${created}</td>
+        <td class="hist-date">${finished}</td>
+        <td class="hist-duration">${duration}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function fmtDateFull(ts) {
+    return new Date(ts).toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' })
+      + ' ' + new Date(ts).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+  }
+
+  function calcDuration(start, end) {
+    const ms  = end - start;
+    const min = Math.floor(ms / 60000);
+    const hr  = Math.floor(min / 60);
+    const day = Math.floor(hr  / 24);
+    if (day > 0)  return `${day}d ${hr % 24}h`;
+    if (hr  > 0)  return `${hr}h ${min % 60}m`;
+    if (min > 0)  return `${min}m`;
+    return 'menos de 1m';
+  }
+
+  function clearHistory() {
+    if (!confirm('Limpar todo o histórico permanentemente?')) return;
+    history = [];
+    saveHistory();
+    renderHistory();
+    document.getElementById('sb-history').textContent = 0;
+  }
+
+  function render() {
+    const scopedTasks = catFilter
+      ? tasks.filter(t => t.catId === catFilter)
+      : tasks;
+
+    const total   = scopedTasks.length;
+    const done    = scopedTasks.filter(t => t.done).length;
+    const pending = total - done;
+    const pct     = total ? Math.round(done / total * 100) : 0;
+
+    document.getElementById('kpi-total').textContent   = total;
+    document.getElementById('kpi-done').textContent    = done;
+    document.getElementById('kpi-pending').textContent = pending;
+    document.getElementById('sb-all').textContent      = tasks.length;
+    document.getElementById('sb-pending').textContent  = tasks.filter(t=>!t.done).length;
+    document.getElementById('sb-done').textContent     = tasks.filter(t=> t.done).length;
+    document.getElementById('sb-history').textContent  = history.length;
+    document.getElementById('prog-fill').style.width   = pct + '%';
+    document.getElementById('prog-pct').textContent    = pct + '%';
+
+    const vis = scopedTasks.filter(t =>
+      filter === 'all' ? true : filter === 'done' ? t.done : !t.done
+    );
+
+    document.getElementById('foot-note').textContent =
+      `${vis.length} item${vis.length !== 1 ? 's' : ''}`;
+
+    const list  = document.getElementById('task-list');
+    const empty = document.getElementById('empty-state');
+    list.innerHTML = '';
+
+    if (vis.length === 0) {
+      empty.style.display = 'block';
+      return;
+    }
+    empty.style.display = 'none';
+
+    // Group tasks
+    if (!catFilter) {
+      // Build groups: one per category + uncategorized
+      const groups = [];
+
+      categories.forEach(cat => {
+        const items = vis.filter(t => t.catId === cat.id);
+        if (items.length) groups.push({ cat, items });
+      });
+
+      const uncategorized = vis.filter(t => !t.catId || !getCat(t.catId));
+      if (uncategorized.length) groups.push({ cat: null, items: uncategorized });
+
+      groups.forEach(({ cat, items }) => {
+        // Group header
+        const header = document.createElement('div');
+        header.className = 'group-header';
+        header.innerHTML = `
+          <span class="group-dot" style="background:${cat ? cat.color : 'var(--text-3)'}"></span>
+          <span class="group-name">${cat ? esc(cat.name) : 'Sem grupo'}</span>
+          <span class="group-count">${items.length} tarefa${items.length !== 1 ? 's' : ''}</span>
+          <span class="group-line"></span>
+        `;
+        list.appendChild(header);
+        items.forEach(t => list.appendChild(makeTaskEl(t, cat)));
+      });
+    } else {
+      // Single category view — no group headers needed
+      const cat = getCat(catFilter);
+      vis.forEach(t => list.appendChild(makeTaskEl(t, cat)));
+    }
+  }
+
+  function makeTaskEl(t, cat) {
+    const el = document.createElement('div');
+    el.className = 'task-item' + (t.done ? ' done' : '');
+    el.dataset.id = t.id;
+
+    const barColor = cat ? cat.color : 'var(--border)';
+    const badgeHtml = cat
+      ? `<span class="task-cat-badge" style="background:${cat.color}22;color:${cat.color}">${esc(cat.name)}</span>`
+      : '';
+
+    el.innerHTML = `
+      <span class="task-bar" style="background:${barColor}"></span>
+      <label class="cb-wrap">
+        <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggle(${t.id})"/>
+        <span class="cb-box"></span>
+      </label>
+      <span class="task-txt">${esc(t.text)}</span>
+      ${badgeHtml}
+      <span class="task-date">${fmtDate(t.ts)}</span>
+      <button class="btn-del" onclick="del(${t.id})" title="Remover">✕</button>
+    `;
+    el.addEventListener('click', function(e) {
+      if (e.target.classList.contains('btn-del') || e.target.closest('.btn-del')) return;
+      if (e.target.closest('.cb-wrap')) return;
+      toggle(t.id);
+    });
+    return el;
+  }
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+  document.getElementById('task-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') addTask();
+  });
+
+  document.getElementById('new-cat-name').addEventListener('keydown', e => {
+    if (e.key === 'Enter') addCategory();
+  });
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', e => {
+    const wrap = document.getElementById('cat-select-wrap');
+    if (wrap && !wrap.contains(e.target))
+      document.getElementById('cat-dropdown').classList.remove('open');
+  });
+
+  renderSidebar();
+  renderCatDropdown();
+  updateCatBtn();
+  render();
+</script>
+</body>
+</html>
