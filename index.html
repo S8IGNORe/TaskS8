@@ -528,6 +528,107 @@
     @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
     @keyframes scaleIn { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: scale(1); } }
 
+    /* ── LOGIN SCREEN ── */
+    #login-screen {
+      align-items: center; background: var(--bg); display: none; inset: 0;
+      justify-content: center; min-height: 100vh; position: fixed; z-index: 200;
+      flex-direction: column;
+    }
+    #login-screen.visible { display: flex; }
+
+    .login-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.15); padding: 2.4rem 2.2rem;
+      width: 100%; max-width: 400px;
+      animation: scaleIn .3s cubic-bezier(.22,1,.36,1);
+    }
+
+    .login-logo {
+      display: flex; align-items: center; gap: .65rem; margin-bottom: 2rem;
+    }
+    .login-logo .logo-icon { background: var(--accent); border-radius: 8px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; }
+    .login-logo .logo-icon svg { width: 18px; height: 18px; }
+    .login-logo span { font-family: 'Libre Baskerville', serif; font-size: 1.2rem; color: var(--text); }
+    .login-logo span b { color: var(--accent); font-weight: 700; }
+
+    .login-title { font-family: 'Libre Baskerville', serif; font-size: 1.3rem; font-weight: 700; margin-bottom: .35rem; }
+    .login-sub   { color: var(--text-2); font-size: .84rem; margin-bottom: 1.6rem; }
+
+    .profile-list { display: flex; flex-direction: column; gap: .5rem; margin-bottom: 1.2rem; }
+
+    .profile-btn {
+      align-items: center; background: var(--input-bg); border: 1.5px solid var(--border);
+      border-radius: 10px; cursor: pointer; display: flex; gap: .85rem;
+      padding: .85rem 1rem; transition: border-color .15s, box-shadow .15s; width: 100%;
+      text-align: left;
+    }
+    .profile-btn:hover { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,111,240,.08); }
+
+    .profile-avatar {
+      border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; font-family: 'Libre Baskerville', serif; font-size: .95rem;
+      font-weight: 700; height: 38px; width: 38px;
+    }
+
+    .profile-info { flex: 1; }
+    .profile-info .pname { color: var(--text); font-size: .9rem; font-weight: 600; }
+    .profile-info .ptasks { color: var(--text-3); font-size: .74rem; }
+
+    .profile-btn svg { color: var(--text-3); width: 16px; height: 16px; }
+
+    .login-divider {
+      align-items: center; color: var(--text-3); display: flex; font-size: .74rem;
+      gap: .7rem; margin: 1rem 0;
+    }
+    .login-divider::before, .login-divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    .login-inp {
+      background: var(--input-bg); border: 1.5px solid var(--border); border-radius: 10px;
+      color: var(--text); font-family: 'IBM Plex Sans', sans-serif; font-size: .9rem;
+      margin-bottom: .7rem; outline: none; padding: .75rem 1rem; transition: border-color .2s, box-shadow .2s;
+      width: 100%;
+    }
+    .login-inp:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,111,240,.1); }
+    .login-inp::placeholder { color: var(--text-3); }
+
+    .login-btn {
+      background: var(--accent); border: none; border-radius: 10px; color: #fff; cursor: pointer;
+      font-family: 'IBM Plex Sans', sans-serif; font-size: .9rem; font-weight: 600;
+      padding: .78rem 1rem; transition: background .15s, box-shadow .15s; width: 100%;
+    }
+    .login-btn:hover { background: var(--accent-h); box-shadow: 0 4px 14px rgba(59,111,240,.35); }
+
+    .login-back {
+      background: none; border: none; color: var(--text-3); cursor: pointer;
+      font-family: 'IBM Plex Sans', sans-serif; font-size: .8rem; margin-top: .8rem;
+      padding: .3rem 0; text-decoration: underline; transition: color .15s;
+    }
+    .login-back:hover { color: var(--text); }
+
+    .login-error {
+      background: rgba(224,88,88,.1); border-radius: 8px; color: var(--danger);
+      display: none; font-size: .8rem; margin-bottom: .7rem; padding: .6rem .9rem;
+    }
+    .login-error.show { display: block; }
+
+    /* PIN dots */
+    .pin-dots { display: flex; gap: .5rem; justify-content: center; margin-bottom: 1.2rem; }
+    .pin-dot {
+      background: var(--border); border-radius: 50%; height: 12px; width: 12px;
+      transition: background .15s;
+    }
+    .pin-dot.filled { background: var(--accent); }
+
+    /* Profile delete btn */
+    .pdel-btn {
+      background: none; border: none; color: transparent; cursor: pointer;
+      font-size: .8rem; padding: .2rem .35rem; border-radius: 6px; transition: all .15s;
+    }
+    .profile-btn:hover .pdel-btn { color: var(--text-3); }
+    .pdel-btn:hover { background: rgba(224,88,88,.12); color: var(--danger) !important; }
+
     /* ── ANIMATIONS ── */
     @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes taskIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
@@ -620,12 +721,24 @@
   </div>
 
   <div class="sb-footer">
-    <div class="version-badge">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;opacity:.5">
-        <polyline points="9 11 12 14 22 4"/>
-        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-      </svg>
-      TaskS8 <span>v1.0.4</span>
+    <div style="border-top:1px solid rgba(255,255,255,.06);padding-top:1rem;display:flex;flex-direction:column;gap:.6rem;">
+      <div style="display:flex;align-items:center;gap:.65rem;">
+        <div class="profile-avatar" id="sb-avatar" style="background:var(--accent);width:32px;height:32px;font-size:.8rem;flex-shrink:0"></div>
+        <div style="flex:1;overflow:hidden;">
+          <div style="color:#dde1ea;font-size:.84rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="sb-profile-name">—</div>
+          <div style="color:var(--text-3);font-size:.7rem;">Perfil ativo</div>
+        </div>
+        <button onclick="logout()" title="Sair" style="background:none;border:none;color:#565d78;cursor:pointer;padding:.3rem;border-radius:6px;transition:all .15s;" onmouseover="this.style.color='#e05858'" onmouseout="this.style.color='#565d78'">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+      </div>
+      <div class="version-badge" style="padding:.2rem 0">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;opacity:.5">
+          <polyline points="9 11 12 14 22 4"/>
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+        </svg>
+        TaskS8 <span>v1.0.5</span>
+      </div>
     </div>
   </div>
 </aside>
@@ -799,31 +912,298 @@
   </div>
 </div>
 
+<!-- LOGIN SCREEN -->
+<div id="login-screen" class="visible">
+  <div class="login-card" id="login-card">
+
+    <div class="login-logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 11 12 14 22 4"/>
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+        </svg>
+      </div>
+      <span>Task<b>S8</b></span>
+    </div>
+
+    <!-- VIEW: select profile -->
+    <div id="view-select">
+      <div class="login-title">Bem-vindo</div>
+      <div class="login-sub">Selecione seu perfil para continuar.</div>
+      <div class="profile-list" id="profile-list"></div>
+      <div class="login-divider">ou</div>
+      <button class="login-btn" onclick="showView('create')" style="background:var(--input-bg);color:var(--text-2);border:1.5px solid var(--border);">
+        + Criar novo perfil
+      </button>
+    </div>
+
+    <!-- VIEW: create profile -->
+    <div id="view-create" style="display:none">
+      <div class="login-title">Novo Perfil</div>
+      <div class="login-sub">Escolha um nome e um PIN de 4 dígitos.</div>
+      <div class="login-error" id="create-error"></div>
+      <input class="login-inp" id="create-name" placeholder="Seu nome" maxlength="24"/>
+      <input class="login-inp" id="create-pin" placeholder="PIN (4 dígitos)" type="password" maxlength="4" inputmode="numeric" pattern="[0-9]*"/>
+      <input class="login-inp" id="create-pin2" placeholder="Confirmar PIN" type="password" maxlength="4" inputmode="numeric" pattern="[0-9]*"/>
+      <button class="login-btn" onclick="createProfile()">Criar perfil</button>
+      <button class="login-back" onclick="showView('select')">← Voltar</button>
+    </div>
+
+    <!-- VIEW: enter PIN -->
+    <div id="view-pin" style="display:none">
+      <div class="login-title" id="pin-title">Olá!</div>
+      <div class="login-sub">Digite seu PIN para entrar.</div>
+      <div class="pin-dots" id="pin-dots">
+        <div class="pin-dot"></div><div class="pin-dot"></div>
+        <div class="pin-dot"></div><div class="pin-dot"></div>
+      </div>
+      <div class="login-error" id="pin-error"></div>
+      <input class="login-inp" id="pin-input" placeholder="PIN" type="password" maxlength="4" inputmode="numeric" pattern="[0-9]*" oninput="updatePinDots()"/>
+      <button class="login-btn" onclick="loginWithPin()">Entrar</button>
+      <button class="login-back" onclick="showView('select')">← Outros perfis</button>
+    </div>
+
+  </div>
+</div>
+
 <script>
+  // ── Crypto (AES-256-GCM + PBKDF2) ────────────────────────────────────────
+  // PIN is NEVER stored anywhere — used only to derive an AES key in memory.
+  // Data encrypted before going to localStorage. Wrong PIN = decryption fails.
+
+  const PROFILE_COLORS = ['#3b6ff0','#2ecc8e','#e05858','#f0a53b','#9b59b6','#1abc9c','#e74c3c','#2980b9'];
+  const CANARY = 'tasks8-v1-ok';
+
+  let currentProfile   = null;
+  let sessionKey       = null;   // CryptoKey in memory only — wiped on logout
+  let pendingProfileId = null;
+
+  async function deriveKey(pin, salt) {
+    const mat = await crypto.subtle.importKey(
+      'raw', new TextEncoder().encode(pin), 'PBKDF2', false, ['deriveKey']
+    );
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt: new Uint8Array(salt), iterations: 200000, hash: 'SHA-256' },
+      mat,
+      { name: 'AES-GCM', length: 256 },
+      false, ['encrypt', 'decrypt']
+    );
+  }
+
+  async function aesEncrypt(key, obj) {
+    const iv  = crypto.getRandomValues(new Uint8Array(12));
+    const enc = await crypto.subtle.encrypt(
+      { name: 'AES-GCM', iv }, key,
+      new TextEncoder().encode(JSON.stringify(obj))
+    );
+    return { iv: [...iv], d: [...new Uint8Array(enc)] };
+  }
+
+  async function aesDecrypt(key, blob) {
+    const dec = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: new Uint8Array(blob.iv) }, key,
+      new Uint8Array(blob.d)
+    );
+    return JSON.parse(new TextDecoder().decode(dec));
+  }
+
+  // ── Profile storage ───────────────────────────────────────────────────────
+  function getProfiles()   { return JSON.parse(localStorage.getItem('tf_profiles') || '[]'); }
+  function saveProfiles(p) { localStorage.setItem('tf_profiles', JSON.stringify(p)); }
+  function profileKey(id, type) { return `tf_enc_${type}_${id}`; }
+  function colorForIndex(i) { return PROFILE_COLORS[i % PROFILE_COLORS.length]; }
+  function initials(name)   { return name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2); }
+
+  async function pset(type, data) {
+    if (!sessionKey) return;
+    const blob = await aesEncrypt(sessionKey, data);
+    localStorage.setItem(profileKey(currentProfile.id, type), JSON.stringify(blob));
+  }
+
+  async function pget(type) {
+    if (!sessionKey) return [];
+    const raw = localStorage.getItem(profileKey(currentProfile.id, type));
+    if (!raw) return [];
+    try { return await aesDecrypt(sessionKey, JSON.parse(raw)); }
+    catch { return []; }
+  }
+
+  function save()        { pset('tasks',   tasks); }
+  function saveCats()    { pset('cats',    categories); }
+  function saveHistory() { pset('history', history); }
+
+  // ── Login views ───────────────────────────────────────────────────────────
+  function showView(v) {
+    ['select','create','pin'].forEach(x =>
+      document.getElementById('view-'+x).style.display = x === v ? 'block' : 'none'
+    );
+    document.getElementById('create-error').classList.remove('show');
+    document.getElementById('pin-error').classList.remove('show');
+    if (v === 'select') renderProfileList();
+    if (v === 'create') setTimeout(()=>document.getElementById('create-name').focus(), 50);
+    if (v === 'pin')    { document.getElementById('pin-input').value=''; updatePinDots(); setTimeout(()=>document.getElementById('pin-input').focus(),50); }
+  }
+
+  function renderProfileList() {
+    const profiles = getProfiles();
+    const list = document.getElementById('profile-list');
+    list.innerHTML = '';
+    if (profiles.length === 0) {
+      list.innerHTML = '<div style="color:var(--text-3);font-size:.84rem;text-align:center;padding:.8rem 0">Nenhum perfil criado ainda.</div>';
+      return;
+    }
+    profiles.forEach((p, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'profile-btn';
+      btn.innerHTML = `
+        <div class="profile-avatar" style="background:${colorForIndex(i)}">${initials(p.name)}</div>
+        <div class="profile-info">
+          <div class="pname">${esc(p.name)}</div>
+          <div class="ptasks" style="display:flex;align-items:center;gap:.3rem">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Dados criptografados
+          </div>
+        </div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        <button class="pdel-btn" title="Excluir perfil" onclick="event.stopPropagation();deleteProfile('${p.id}')">✕</button>
+      `;
+      btn.addEventListener('click', () => startLogin(p.id));
+      list.appendChild(btn);
+    });
+  }
+
+  function startLogin(profileId) {
+    pendingProfileId = profileId;
+    const p = getProfiles().find(x => x.id === profileId);
+    document.getElementById('pin-title').textContent = `Olá, ${p.name}!`;
+    showView('pin');
+  }
+
+  async function createProfile() {
+    const name = document.getElementById('create-name').value.trim();
+    const pin  = document.getElementById('create-pin').value;
+    const pin2 = document.getElementById('create-pin2').value;
+    const err  = document.getElementById('create-error');
+
+    if (!name)
+      { err.textContent = 'Digite um nome.'; err.classList.add('show'); return; }
+    if (pin.length !== 4 || !/^\d{4}$/.test(pin))
+      { err.textContent = 'O PIN deve ter exatamente 4 dígitos numéricos.'; err.classList.add('show'); return; }
+    if (pin !== pin2)
+      { err.textContent = 'Os PINs não coincidem.'; err.classList.add('show'); return; }
+
+    const profiles = getProfiles();
+    if (profiles.find(p => p.name.toLowerCase() === name.toLowerCase()))
+      { err.textContent = 'Já existe um perfil com esse nome.'; err.classList.add('show'); return; }
+
+    const salt   = [...crypto.getRandomValues(new Uint8Array(16))];
+    const key    = await deriveKey(pin, salt);
+    const canary = await aesEncrypt(key, CANARY);
+    const id     = Date.now().toString(36) + Math.random().toString(36).slice(2);
+
+    profiles.push({ id, name, salt, canary });
+    saveProfiles(profiles);
+
+    document.getElementById('create-name').value = '';
+    document.getElementById('create-pin').value  = '';
+    document.getElementById('create-pin2').value = '';
+
+    sessionKey = key;
+    pendingProfileId = id;
+    await enterApp(profiles[profiles.length - 1], profiles.length - 1);
+  }
+
+  async function loginWithPin() {
+    const pin = document.getElementById('pin-input').value;
+    const err = document.getElementById('pin-error');
+    if (pin.length !== 4) { err.textContent = 'Digite os 4 dígitos do PIN.'; err.classList.add('show'); return; }
+
+    const profiles = getProfiles();
+    const p = profiles.find(x => x.id === pendingProfileId);
+    if (!p) { showView('select'); return; }
+
+    try {
+      const key    = await deriveKey(pin, p.salt);
+      const result = await aesDecrypt(key, p.canary);
+      if (result !== CANARY) throw new Error('bad pin');
+      sessionKey = key;
+      await enterApp(p, profiles.indexOf(p));
+    } catch {
+      err.textContent = 'PIN incorreto. Tente novamente.';
+      err.classList.add('show');
+      document.getElementById('pin-input').value = '';
+      updatePinDots();
+    }
+  }
+
+  function updatePinDots() {
+    const val = document.getElementById('pin-input').value;
+    document.querySelectorAll('.pin-dot').forEach((d, i) =>
+      d.classList.toggle('filled', i < val.length)
+    );
+    if (val.length === 4) loginWithPin();
+  }
+
+  async function enterApp(profile, idx) {
+    currentProfile = profile;
+    tasks      = await pget('tasks');
+    categories = await pget('cats');
+    history    = await pget('history');
+
+    applyDark(localStorage.getItem(profileKey(profile.id,'dark')) === '1');
+
+    document.getElementById('sb-profile-name').textContent = profile.name;
+    const av = document.getElementById('sb-avatar');
+    av.textContent = initials(profile.name);
+    av.style.background = colorForIndex(idx);
+
+    document.getElementById('login-screen').classList.remove('visible');
+    checkRecurring();
+    renderSidebar();
+    renderCatDropdown();
+    updateCatBtn();
+    render();
+  }
+
+  function logout() {
+    sessionKey     = null;   // key wiped from memory
+    currentProfile = null;
+    tasks = []; categories = []; history = [];
+    document.getElementById('login-screen').classList.add('visible');
+    showView('select');
+  }
+
+  async function deleteProfile(id) {
+    if (!confirm('Excluir este perfil e todos os seus dados permanentemente?')) return;
+    saveProfiles(getProfiles().filter(p => p.id !== id));
+    ['tasks','cats','history','dark'].forEach(t => localStorage.removeItem(profileKey(id, t)));
+    renderProfileList();
+  }
+
   // ── State ──────────────────────────────────────────────────────────────────
-  let tasks      = JSON.parse(localStorage.getItem('tf_tasks')   || '[]');
-  let categories = JSON.parse(localStorage.getItem('tf_cats')    || '[]');
-  let history    = JSON.parse(localStorage.getItem('tf_history') || '[]');
+  let tasks      = [];
+  let categories = [];
+  let history    = [];
   let filter     = 'all';
   let catFilter  = null;
   let selCatId   = null;
-  let selRec     = '';   // '' | 'daily' | 'weekly' | 'monthly'
+  let selRec     = '';
 
-  function save()        { localStorage.setItem('tf_tasks',   JSON.stringify(tasks)); }
-  function saveCats()    { localStorage.setItem('tf_cats',    JSON.stringify(categories)); }
-  function saveHistory() { localStorage.setItem('tf_history', JSON.stringify(history)); }
+  function save()        { pset('tasks',   tasks); }
+  function saveCats()    { pset('cats',    categories); }
+  function saveHistory() { pset('history', history); }
 
   // ── Dark mode ──────────────────────────────────────────────────────────────
   function applyDark(on) {
     document.body.classList.toggle('dark', on);
-    document.getElementById('dark-toggle').classList.toggle('on', on);
+    const tog = document.getElementById('dark-toggle');
+    if (tog) tog.classList.toggle('on', on);
   }
   function toggleDark() {
     const d = !document.body.classList.contains('dark');
-    localStorage.setItem('tf_dark', d ? '1' : '0');
+    if (currentProfile) localStorage.setItem(profileKey(currentProfile.id,'dark'), d ? '1' : '0');
     applyDark(d);
   }
-  applyDark(localStorage.getItem('tf_dark') === '1');
 
   // ── Date chip ──────────────────────────────────────────────────────────────
   const MONTHS = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
@@ -1414,11 +1794,8 @@
       document.getElementById('rec-dropdown').classList.remove('open');
   });
 
-  checkRecurring();
-  renderSidebar();
-  renderCatDropdown();
-  updateCatBtn();
-  render();
+  // ── Init: show login screen ───────────────────────────────────────────────
+  showView('select');
 
   // Live countdown: update every 30s
   setInterval(() => {
