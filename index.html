@@ -738,7 +738,7 @@
           <polyline points="9 11 12 14 22 4"/>
           <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
         </svg>
-        TaskS8 <span>v1.0.8</span>
+        TaskS8 <span>v1.0.9</span>
       </div>
     </div>
   </div>
@@ -1082,7 +1082,7 @@
       await updateProfile(cred.user, { displayName: name });
       // onAuthStateChanged handles the rest
     } catch(e) {
-      err.textContent = FB_ERRORS[e.code] || 'Erro ao criar conta. Tente novamente.';
+      err.textContent = FB_ERRORS[e.code] || `Erro: ${e.code || e.message}`;
       err.classList.add('show');
       setLoading('register-btn', false);
     }
